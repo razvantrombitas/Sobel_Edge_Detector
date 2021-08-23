@@ -107,7 +107,7 @@ begin
   end process;
 
   -- Write to and read from the RAM
-  PROC_RAM : process(clk)
+  UPDATE_RAM : process(clk)
   begin
     if rising_edge(clk) then
       ram(head) <= wr_data;
