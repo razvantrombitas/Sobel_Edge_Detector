@@ -1,3 +1,5 @@
+-- Grayscale testbench
+
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
@@ -12,6 +14,7 @@ architecture sim of grayscale_tb is
 
   type header_type  is array (0 to 53) of character;
 
+  -- Define a new type 
   type pixel_type is record
     red : std_logic_vector(7 downto 0);
     green : std_logic_vector(7 downto 0);
@@ -54,6 +57,7 @@ begin
     variable image : image_pointer;
     variable padding : integer;
     variable char : character;
+  
   begin
 
     -- Read entire header
@@ -63,10 +67,10 @@ begin
 
     -- Check ID field
     assert header(0) = 'B' and header(1) = 'M'
-      report "First two bytes are not ""BM"". This is not a BMP file"
+      report "First two bytes are not BM"
       severity failure;
 
-    -- Check that the pixel array offset is as expected
+    -- Check the pixel array offset size is 54
     assert character'pos(header(10)) = 54 and
       character'pos(header(11)) = 0 and
       character'pos(header(12)) = 0 and
@@ -74,24 +78,25 @@ begin
       report "Pixel array offset in header is not 54 bytes"
       severity failure;
 
-    -- Check that DIB header size is 40 bytes,
-    -- meaning that the BMP is of type BITMAPINFOHEADER
+    -- Check DIB header size is 40 bytes
     assert character'pos(header(14)) = 40 and
       character'pos(header(15)) = 0 and
       character'pos(header(16)) = 0 and
       character'pos(header(17)) = 0
-      report "DIB headers size is not 40 bytes, is this a Windows BMP?"
+      report "DIB headers size is not 40 bytes"
       severity failure;
 
-    -- Check that the number of color planes is 1
+    -- Check the number of color planes is 1
     assert character'pos(header(26)) = 1 and
       character'pos(header(27)) = 0
-      report "Color planes is not 1" severity failure;
+      report "Color planes is not 1" 
+      severity failure;
 
-    -- Check that the number of bits per pixel is 24
+    -- Check the number of bits per pixel is 24
     assert character'pos(header(28)) = 24 and
       character'pos(header(29)) = 0
-      report "Bits per pixel is not 24" severity failure;
+      report "Bits per pixel is not 24" 
+      severity failure;
 
     -- Read image width
     image_width := character'pos(header(18)) +
@@ -105,12 +110,10 @@ begin
       character'pos(header(24)) * 2**16 +
       character'pos(header(25)) * 2**24;
 
-    report "image_width: " & integer'image(image_width) &
-      ", image_height: " & integer'image(image_height);
+    report "image_width: " & integer'image(image_width) & ", image_height: " & integer'image(image_height);
 
     -- Number of bytes needed to pad each row to 32 bits
     padding := (4 - image_width*3 mod 4) mod 4;
-
 
     -- Create a new image type in dynamic memory
     image := new image_type(0 to image_height - 1);
@@ -124,22 +127,19 @@ begin
 
         -- Read blue pixel
         read(bmp_file, char);
-        row(col_i).blue :=
-          std_logic_vector(to_unsigned(character'pos(char), 8));
+        row(col_i).blue := std_logic_vector(to_unsigned(character'pos(char), 8));
 
         -- Read green pixel
         read(bmp_file, char);
-        row(col_i).green :=
-          std_logic_vector(to_unsigned(character'pos(char), 8));
+        row(col_i).green := std_logic_vector(to_unsigned(character'pos(char), 8));
 
         -- Read red pixel
         read(bmp_file, char);
-        row(col_i).red :=
-          std_logic_vector(to_unsigned(character'pos(char), 8));
+        row(col_i).red := std_logic_vector(to_unsigned(character'pos(char), 8));
 
       end loop;
 
-      -- Read and discard padding
+      -- Read the padding
       for i in 1 to padding loop
         read(bmp_file, char);
       end loop;
@@ -150,12 +150,13 @@ begin
     end loop;
 
 
-    report "AFTER READ";
-    report "IMAGE RED GREEN BLUE " & to_hstring(row(0).red) & to_hstring(row(0).green) & to_hstring(row(0).blue);
-    report "MATRIX RED GREEN BLUE " & to_hstring(image(0)(0).red) & to_hstring(image(0)(0).green) & to_hstring(image(0)(0).blue);
+    -- report "AFTER READ";
+    -- report "IMAGE RED GREEN BLUE " & to_hstring(row(0).red) & to_hstring(row(0).green) & to_hstring(row(0).blue);
+    -- report "MATRIX RED GREEN BLUE " & to_hstring(image(0)(0).red) & to_hstring(image(0)(0).green) & to_hstring(image(0)(0).blue);
 
-    --Gx[i, j] = p[i+1, j-1] + 2 × p[i+1, j] + p(i+1, j+1) – { p[i-1, j-1] + 2 × p[i-1, j] + p(i-1, j+1) }
-    --Gy[i, j] = p[i-1, j+1] + 2 × p[i, j+1] + pi+1, j+1) – { p[i-1, j-1] + 2 × p[i, j-1] + p(i+1, j-1) }
+    -- Sobel operations
+    -- Gx[i, j] = p[i+1, j-1] + 2 × p[i+1, j] + p(i+1, j+1) – { p[i-1, j-1] + 2 × p[i-1, j] + p(i-1, j+1) }
+    -- Gy[i, j] = p[i-1, j+1] + 2 × p[i, j+1] + pi+1, j+1) – { p[i-1, j-1] + 2 × p[i, j-1] + p(i+1, j-1) }
 
     -- DUT test
     for row_i in 0 to image_height - 1 loop
@@ -164,7 +165,6 @@ begin
       for col_i in 0 to image_width - 1 loop
 
         r_in <= row(col_i).red;
-        --report "T1 :" & to_hstring(temp1);
         g_in <= row(col_i).green;
         b_in <= row(col_i).blue;
         wait for 10 ns;
@@ -176,9 +176,9 @@ begin
       end loop;
     end loop;
 
-    report "BEFORE WRITE";
-    report "IMAGE RED GREEN BLUE " & to_hstring(row(0).red) & to_hstring(row(0).green) & to_hstring(row(0).blue);
-    report "MATRIX RED GREEN BLUE " & to_hstring(image(0)(0).red) & to_hstring(image(0)(0).green) & to_hstring(image(0)(0).blue);
+    -- report "BEFORE WRITE";
+    -- report "IMAGE RED GREEN BLUE " & to_hstring(row(0).red) & to_hstring(row(0).green) & to_hstring(row(0).blue);
+    -- report "MATRIX RED GREEN BLUE " & to_hstring(image(0)(0).red) & to_hstring(image(0)(0).green) & to_hstring(image(0)(0).blue);
 
 
     -- Write header to output file
@@ -219,7 +219,7 @@ begin
     file_close(bmp_file);
     file_close(out_file);
 
-    report "Simulation done. Check ""out.bmp"" image.";
+    report "Simulation done";
     finish;
   end process;
 

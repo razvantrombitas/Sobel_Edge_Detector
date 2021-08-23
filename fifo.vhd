@@ -49,8 +49,8 @@ architecture rtl of fifo is
   signal full_i : std_logic;
   signal fill_count_i : integer range RAM_DEPTH - 1 downto 0;
 
-  -- Increment and wrap
-  procedure incr(signal index : inout index_type) is
+  -- Update index
+  procedure update(signal index : inout index_type) is
   begin
     if index = index_type'high then
       index <= index_type'low;
@@ -61,7 +61,6 @@ architecture rtl of fifo is
 
 begin
 
-  -- Copy internal signals to output
   empty <= empty_i;
   full <= full_i;
   fill_count <= fill_count_i;
@@ -72,8 +71,8 @@ begin
   full_i <= '1' when fill_count_i >= RAM_DEPTH - 1 else '0';
   full_next <= '1' when fill_count_i >= RAM_DEPTH - 2 else '0';
 
-  -- Update the head pointer in write
-  PROC_HEAD : process(clk)
+  -- Update the head pointer 
+  UPDATE_HEAD : process(clk)
   begin
     if rising_edge(clk) then
       if rst = '1' then
@@ -81,15 +80,15 @@ begin
       else
 
         if wr_en = '1' and full_i = '0' then
-          incr(head);
+          update(head);
         end if;
 
       end if;
     end if;
   end process;
 
-  -- Update the tail pointer on read and pulse valid
-  PROC_TAIL : process(clk)
+  -- Update the tail 
+  UPDATE_TAIL : process(clk)
   begin
     if rising_edge(clk) then
       if rst = '1' then
@@ -99,7 +98,7 @@ begin
         rd_valid <= '0';
 
         if rd_en = '1' and empty_i = '0' then
-          incr(tail);
+          update(tail);
           rd_valid <= '1';
         end if;
 
@@ -116,8 +115,8 @@ begin
     end if;
   end process;
 
-  -- Update the fill count
-  PROC_COUNT : process(head, tail)
+  -- Update the FIFO size
+  COUNT : process(head, tail)
   begin
     if head < tail then
       fill_count_i <= head - tail + RAM_DEPTH;

@@ -1,4 +1,4 @@
--- fifo 
+-- FIFO testbench 
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -12,8 +12,6 @@ end fifo_tb;
 architecture sim of fifo_tb is
 
   constant clock_period : time := 10 ns;
-
-  -- Generics
   constant RAM_WIDTH : natural := 16;
   constant RAM_DEPTH : natural := 256;
 
@@ -55,7 +53,7 @@ begin
 
     clk <= not clk after clock_period / 2;
 
-    PROC_SEQUENCER : process
+    TB : process
     begin
       
       wait for 10 * clock_period;
@@ -74,7 +72,7 @@ begin
       -- Stop writing
       wr_en <= '0';
 
-      -- Empty the FIFO
+      -- Empty FIFO
       rd_en <= '1';
       wait until empty_next = '1';
 
