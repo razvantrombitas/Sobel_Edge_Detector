@@ -1,11 +1,12 @@
+-- FIFO RTL
 -- head -> points to the memory block/slot that will contain the next data
 -- tail -> points to the next element that will be read from the FIFO
 -- head == tail (doesn't matter where the index is) -> fifo empty (initial state); 
 -- head_index == tail_(index-1) -> fifo full
 -- number of elements in the fifo = head - tail
 
-library ieee;
-use ieee.std_logic_1164.all;
+library IEEE;
+use IEEE.std_logic_1164.all;
 
 entity fifo is
   generic (
@@ -31,8 +32,8 @@ entity fifo is
     full : out std_logic;
     full_next : out std_logic; -- almost full ('high' one clock cycle before the fifo gets full)
 
-    -- The number of elements in the FIFO
-    fill_count : out integer range RAM_DEPTH - 1 downto 0
+    -- Count the number of elements in the FIFO
+    count : out integer range RAM_DEPTH - 1 downto 0
   );
 end fifo;
 
@@ -47,7 +48,7 @@ architecture rtl of fifo is
 
   signal empty_i : std_logic;
   signal full_i : std_logic;
-  signal fill_count_i : integer range RAM_DEPTH - 1 downto 0;
+  signal count_i : integer range RAM_DEPTH - 1 downto 0;
 
   -- Update index
   procedure update(signal index : inout index_type) is
@@ -63,13 +64,13 @@ begin
 
   empty <= empty_i;
   full <= full_i;
-  fill_count <= fill_count_i;
+  count <= count_i;
 
   -- Set the flags
-  empty_i <= '1' when fill_count_i = 0 else '0';
-  empty_next <= '1' when fill_count_i <= 1 else '0';
-  full_i <= '1' when fill_count_i >= RAM_DEPTH - 1 else '0';
-  full_next <= '1' when fill_count_i >= RAM_DEPTH - 2 else '0';
+  empty_i <= '1' when count_i = 0 else '0';
+  empty_next <= '1' when count_i <= 1 else '0';
+  full_i <= '1' when count_i >= RAM_DEPTH - 1 else '0';
+  full_next <= '1' when count_i >= RAM_DEPTH - 2 else '0';
 
   -- Update the head pointer 
   UPDATE_HEAD : process(clk)
@@ -116,12 +117,12 @@ begin
   end process;
 
   -- Update the FIFO size
-  COUNT : process(head, tail)
+  COUNTER : process(head, tail)
   begin
     if head < tail then
-      fill_count_i <= head - tail + RAM_DEPTH;
+      count_i <= head - tail + RAM_DEPTH;
     else
-      fill_count_i <= head - tail;
+      count_i <= head - tail;
     end if;
   end process;
 

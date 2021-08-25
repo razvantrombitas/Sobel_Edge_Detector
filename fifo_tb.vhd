@@ -1,10 +1,10 @@
 -- FIFO testbench 
 
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.numeric_std.all;
 
-use std.env.finish;
+use STD.env.finish;
 
 entity fifo_tb is
 end fifo_tb; 
@@ -51,6 +51,7 @@ begin
       fill_count => fill_count
     );
 
+    -- Define the clock
     clk <= not clk after clock_period / 2;
 
     TB : process

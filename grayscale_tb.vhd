@@ -12,6 +12,7 @@ end grayscale_tb;
 
 architecture sim of grayscale_tb is
 
+  -- BMP file header
   type header_type  is array (0 to 53) of character;
 
   -- Define a new type 
@@ -65,6 +66,10 @@ begin
       read(bmp_file, header(i));
     end loop;
 
+
+
+    -- Some checks for BMP file format  
+
     -- Check ID field
     assert header(0) = 'B' and header(1) = 'M'
       report "First two bytes are not BM"
@@ -98,6 +103,8 @@ begin
       report "Bits per pixel is not 24" 
       severity failure;
 
+
+
     -- Read image width
     image_width := character'pos(header(18)) +
       character'pos(header(19)) * 2**8 +
@@ -111,6 +118,8 @@ begin
       character'pos(header(25)) * 2**24;
 
     report "image_width: " & integer'image(image_width) & ", image_height: " & integer'image(image_height);
+
+
 
     -- Number of bytes needed to pad each row to 32 bits
     padding := (4 - image_width*3 mod 4) mod 4;
@@ -181,7 +190,7 @@ begin
     -- report "MATRIX RED GREEN BLUE " & to_hstring(image(0)(0).red) & to_hstring(image(0)(0).green) & to_hstring(image(0)(0).blue);
 
 
-    -- Write header to output file
+    -- Write the header to the output file
     for i in header_type'range loop
       write(out_file, header(i));
     end loop;
